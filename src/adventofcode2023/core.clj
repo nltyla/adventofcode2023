@@ -24,11 +24,11 @@
 (defn day1-1
   "--- Day 1: Trebuchet?! ---"
   [name]
-  (let [v (inputs name identity)]
-    (->> v
-         (map #(str/replace % #"[^0-9]" ""))
-         (map #(parse-int (str (first %) (last %))))
-         (apply +))))
+  (let [v (inputs name identity)
+        xf (comp
+             (map #(str/replace % #"[^0-9]" ""))
+             (map #(parse-int (str (first %) (last %)))))]
+    (transduce xf + v)))
 
 (defn map-numbers [pairs s]
   (let [first-digit (apply min-key #(or (str/index-of s (second %)) Integer/MAX_VALUE) pairs)
@@ -42,6 +42,6 @@
         num-str-pairs (concat
                         (map-indexed vector (map str (range 10)))
                         (map-indexed vector ["zero" "one" "two" "three" "four" "five" "six" "seven" "eight" "nine"]))
-        nums (map #(map-numbers num-str-pairs %) v)]
-    (reduce + nums)))
+        xf (map #(map-numbers num-str-pairs %))]
+    (transduce xf + v)))
 
