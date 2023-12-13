@@ -71,3 +71,21 @@
                    (inc index)))
                v)]
     (reduce + oknr)))
+
+(defn day2-2-parse-line [s]
+  (let [[_ hands] (str/split s #": ")
+        vhands (partition 2 (str/split hands #" |, |; "))]
+    (reduce (fn [acc v]
+              (update acc
+                      (keyword (second v))
+                      (fnil max 0)
+                      (parse-int (first v))))
+            {}
+            vhands)))
+
+(defn day2-2
+  "--- Day 2 Part Two: Cube Conundrum ---"
+  [name]
+  (let [v (inputs name day2-2-parse-line)
+        power (map #(* (:red %) (:green %) (:blue %)) v)]
+    (reduce + power)))
