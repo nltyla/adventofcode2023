@@ -55,21 +55,19 @@
     (transduce xf + v)))
 
 (defn day2-1-parse-line [s]
-  (let [[game hands] (str/split s #": ")
-        game-nr (parse-int (second (str/split game #" ")))
-        vhands (partition 2 (str/split hands #" |, |; "))
-        pairs (map #(vector (keyword (second %)) (parse-int (first %1))) vhands)]
-    [game-nr pairs]))
+  (let [[_ hands] (str/split s #": ")
+        vhands (partition 2 (str/split hands #" |, |; "))]
+    (map #(vector (keyword (second %)) (parse-int (first %1))) vhands)))
 
 (def day1-2-thresholds {:red 12 :green 13 :blue 14})
+
 (defn day2-1
   "--- Day 2: Cube Conundrum ---"
   [name]
   (let [v (inputs name day2-1-parse-line)
-        okrows (filter
-                 (fn [[_ pairs]]
-                   (every?
-                     (fn [[color cnt]] (<= cnt (color day1-2-thresholds)))
-                     pairs)) v)
-        oknr (map first okrows)]
+        oknr (keep-indexed
+               (fn [index pairs]
+                 (if (every? (fn [[color cnt]] (<= cnt (color day1-2-thresholds))) pairs)
+                   (inc index)))
+               v)]
     (reduce + oknr)))
