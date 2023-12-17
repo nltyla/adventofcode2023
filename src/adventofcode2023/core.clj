@@ -89,3 +89,46 @@
   (let [v (inputs name day2-2-parse-line)
         power (map #(* (:red %) (:green %) (:blue %)) v)]
     (reduce + power)))
+
+(defn get-nums [s]
+  (let [z (->> s
+               (partition-by #(Character/isDigit %))
+               (map #(apply str %))
+               (filter #(Character/isDigit (first %)))
+               (reduce (fn [acc val] (let [from (if-let [x (last acc)] (+ (count (x 0)) (x 1)) 0)] (conj acc [val (str/index-of s val from)]))) []))]
+    [s z]))
+
+
+(defn valid-number
+  [raw-rows [num idx]]
+  (let [rowlen (count (first raw-rows))
+        start (max 0 (dec idx))
+        end (min rowlen (+ (count num) (+ idx 1)))
+        z (some #(re-find #"[^0-9.]" (subs % start end)) raw-rows)]
+    z))
+
+
+(defn get-valid-numbers
+  [row-partition]
+  (let [raw-rows (map first row-partition)
+        z (reduce (fn [acc vpair] (if (valid-number raw-rows vpair)
+                                (conj acc (parse-int (first vpair)))
+                                acc))
+                  []
+                  (second (second row-partition)))
+        ]
+    z
+    )
+  )
+(defn day3-1
+  "--- Day 3: Gear Ratios ---"
+  [name]
+  (let [v (inputs name identity)
+        filler (apply str (repeat (count (first v)) \.))
+        pad (concat (list filler) v (list filler))
+        zz1 (map get-nums pad)
+        zz2 (partition 3 1 zz1)
+        zz3 (map get-valid-numbers zz2)
+        zz4 (map #(reduce + %) zz3)
+        zz5 (reduce + zz4)]
+    zz5))
