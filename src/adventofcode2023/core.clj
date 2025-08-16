@@ -2,6 +2,7 @@
   (:require [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.set :as set]
+            [clojure.math :as math]
             [clojure.data.priority-map :refer [priority-map]]
             [clojure.walk :as w]
             [clojure.zip :as z]
@@ -13,13 +14,9 @@
   [name f]
   (map f (str/split-lines (slurp (io/resource name)))))
 
-(defn parse-int
-  [s]
-  (Integer/parseInt s))
-
 (defn parse-ints-csv
   [s]
-  (map parse-int (str/split s #",")))
+  (map parse-long (str/split s #",")))
 
 (defn day1-1
   "--- Day 1: Trebuchet?! ---"
@@ -27,7 +24,7 @@
   (let [v (str/split-lines (slurp (io/resource name)))
         xf (comp
              (map #(str/replace % #"[^0-9]" ""))
-             (map #(parse-int (str (first %) (last %)))))]
+             (map #(parse-long (str (first %) (last %)))))]
     (transduce xf + v)))
 
 (defn day1-1
@@ -36,13 +33,13 @@
   (let [v (inputs name identity)
         xf (comp
              (map #(str/replace % #"[^0-9]" ""))
-             (map #(parse-int (str (first %) (last %)))))]
+             (map #(parse-long (str (first %) (last %)))))]
     (transduce xf + v)))
 
 (defn map-numbers [pairs s]
   (let [first-digit (apply min-key #(or (str/index-of s (second %)) Integer/MAX_VALUE) pairs)
         last-digit (apply max-key #(or (str/last-index-of s (second %)) Integer/MIN_VALUE) pairs)]
-    (parse-int (str (first first-digit) (first last-digit)))))
+    (parse-long (str (first first-digit) (first last-digit)))))
 
 (defn day1-2
   "--- Day 1 Part Two: Trebuchet?! ---"
@@ -57,7 +54,7 @@
 (defn day2-1-parse-line [s]
   (let [[_ hands] (str/split s #": ")
         vhands (partition 2 (str/split hands #" |, |; "))]
-    (map #(vector (keyword (second %)) (parse-int (first %1))) vhands)))
+    (map #(vector (keyword (second %)) (parse-long (first %1))) vhands)))
 
 (def day1-2-thresholds {:red 12 :green 13 :blue 14})
 
@@ -79,7 +76,7 @@
               (update acc
                       (keyword (second v))
                       (fnil max 0)
-                      (parse-int (first v))))
+                      (parse-long (first v))))
             {}
             vhands)))
 
@@ -92,9 +89,9 @@
 
 (defn get-nums [s]
   (let [z (->> s
-               (partition-by #(Character/isDigit %))
+               (partition-by #(^[char] Character/isDigit %))
                (map #(apply str %))
-               (filter #(Character/isDigit (first %)))
+               (filter #(^[char] Character/isDigit (first %)))
                (reduce (fn [acc val] (let [from (if-let [x (last acc)] (+ (count (x 0)) (x 1)) 0)] (conj acc [val (str/index-of s val from)]))) []))]
     [s z]))
 
@@ -112,7 +109,7 @@
   [row-partition]
   (let [raw-rows (map first row-partition)
         z (reduce (fn [acc vpair] (if (valid-number raw-rows vpair)
-                                (conj acc (parse-int (first vpair)))
+                                (conj acc (parse-long (first vpair)))
                                 acc))
                   []
                   (second (second row-partition)))
@@ -132,3 +129,19 @@
         zz4 (map #(reduce + %) zz3)
         zz5 (reduce + zz4)]
     zz5))
+
+(defn parse-longs [s]
+  (into #{} (map parse-long) (str/split (str/trim s) #"\s+")))
+
+(defn parse-day4-1 [s] (let [[_ nums] (str/split s #":")
+                             [wins haves] (str/split nums #"\|")]
+                         [(parse-longs wins) (parse-longs haves)]))
+
+(defn day4-1
+  "--- Day 4: Scratchcards ---"
+  [name]
+  (->> (inputs name parse-day4-1)
+       (map #(apply set/intersection %))
+       (filter seq)
+       (map #(bit-shift-left 1 (dec (count %))))
+       (reduce +)))
