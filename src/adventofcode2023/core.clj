@@ -92,9 +92,14 @@
                (partition-by #(^[char] Character/isDigit %))
                (map #(apply str %))
                (filter #(^[char] Character/isDigit (first %)))
-               (reduce (fn [acc val] (let [from (if-let [x (last acc)] (+ (count (x 0)) (x 1)) 0)] (conj acc [val (str/index-of s val from)]))) []))]
+               (reduce
+                 (fn [acc val]
+                   (let [from (if-let [x (last acc)]
+                                (+ (count (x 0)) (x 1))
+                                0)]
+                     (conj acc [val (str/index-of s val from)])))
+                 []))]
     [s z]))
-
 
 (defn valid-number
   [raw-rows [num idx]]
@@ -109,26 +114,76 @@
   [row-partition]
   (let [raw-rows (map first row-partition)
         z (reduce (fn [acc vpair] (if (valid-number raw-rows vpair)
-                                (conj acc (parse-long (first vpair)))
-                                acc))
+                                    (conj acc (parse-long (first vpair)))
+                                    acc))
                   []
-                  (second (second row-partition)))
-        ]
-    z
-    )
-  )
+                  (second (second row-partition)))]
+
+    z))
+
+
 (defn day3-1
   "--- Day 3: Gear Ratios ---"
   [name]
   (let [v (inputs name identity)
-        filler (apply str (repeat (count (first v)) \.))
-        pad (concat (list filler) v (list filler))
-        zz1 (map get-nums pad)
-        zz2 (partition 3 1 zz1)
-        zz3 (map get-valid-numbers zz2)
-        zz4 (map #(reduce + %) zz3)
-        zz5 (reduce + zz4)]
-    zz5))
+        filler (apply str (repeat (count (first v)) \.))]
+    (->> (concat (list filler) v (list filler))
+         (map get-nums)
+         (partition 3 1)
+         (map get-valid-numbers)
+         (map #(reduce + %))
+         (reduce +))))
+
+(defn add-num
+  [row digits start col nums stars]
+  (if (empty? digits)
+    [[] nil nums stars]
+    (let [num (parse-long (apply str digits))
+          nums' (reduce
+                  (fn [nums col]
+                    (assoc nums [row col] num))
+                  nums
+                  (range start col))]
+      [[] nil nums' stars])))
+
+(defn parse-row
+  [s row]
+  (let [[_ _ nums stars] (reduce-kv
+                           (fn [[digits start nums stars] col c]
+                             (if (^[char] Character/isDigit c)
+                               [(conj digits c) (or start col) nums stars]
+                               (let [stars' (if (= \* c) (conj stars [row col]) stars)]
+                                 (add-num row digits start col nums stars'))))
+                           [[] nil {} []]
+                           (conj (vec s) \.))]
+    [nums stars]))
+
+(defn day3-2
+  [name]
+  (let [f (inputs name identity)
+        [nums stars] (reduce-kv
+                       (fn [[allnums allstars] row s]
+                         (let [[nums stars] (parse-row s row)]
+                           [(conj allnums nums) (into allstars stars)]))
+                       [{} []]
+                       (vec f))
+        sum (->> (map
+                   (fn [[row col]]
+                     (reduce
+                       (fn [acc pos] (if-let [num (nums pos)]
+                                       (conj acc num)
+                                       acc))
+                       #{}
+                       [[(dec row) (dec col)] [(dec row) col] [(dec row) (inc col)]
+                        [row (dec col)] [row (inc col)]
+                        [(inc row) (dec col)] [(inc row) col] [(inc row) (inc col)]]))
+                   stars)
+                 (filter #(= 2 (count %)))
+                 (map #(apply * %))
+                 (reduce +))
+        ]
+    sum
+    ))
 
 (defn parse-longs [s]
   (into #{} (map parse-long) (str/split (str/trim s) #"\s+")))
@@ -145,3 +200,22 @@
        (filter seq)
        (map #(bit-shift-left 1 (dec (count %))))
        (reduce +)))
+
+(defn day4-2
+  "--- Day 4 Part Two: Scratchcards ---"
+  [name]
+  (let [wins (->> (inputs name parse-day4-1)
+                  (map #(apply set/intersection %))
+                  (mapv count))
+        counts (vec (repeat (count wins) 1))
+        total (reduce-kv
+                (fn [acc idx wins]
+                  (let [fpluscount (partial + (acc idx))]
+                    (reduce
+                      (fn [acc iidx] (update acc iidx fpluscount))
+                      acc
+                      (range (inc idx) (+ idx wins 1)))))
+                counts
+                wins)]
+
+    (reduce + total)))
