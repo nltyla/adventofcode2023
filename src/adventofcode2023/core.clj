@@ -219,3 +219,49 @@
                 wins)]
 
     (reduce + total)))
+
+(defn parse-longs-vec [s]
+  (into [] (map parse-long) (str/split (str/trim s) #"\s+")))
+
+(defn take-from-to [frompred topred coll]
+  (let [[_ tail] (split-with frompred coll)
+        [head _] (split-with topred (rest tail))
+        result (map parse-longs-vec head)]
+    result))
+
+(defn add-def [m [dest src cnt]]
+  (assoc m src [dest cnt]))
+
+(defn read-mapdef [name l]
+  (take-from-to #(not (str/starts-with? %1 name)) #(not (str/blank? %1)) l))
+
+(defn expand-defs [defs]
+  (reduce add-def (sorted-map) defs))
+
+(defn create-map [name l]
+  (expand-defs (read-mapdef name l)))
+
+(defn sorted-get [sc n]
+  (if-let [[src [dest cnt]] (first (rsubseq sc <= n))]
+    (if (< n (+ src cnt))
+      (+ n (- dest src))
+      n)
+    n))
+
+(defn lookup [mapcol n]
+  (reduce #(sorted-get %2 %1) n mapcol))
+
+(defn day5-1
+  "--- Day 5: If You Give A Seed A Fertilizer ---"
+  [name]
+  (let [l (inputs name identity)
+        seeds (parse-longs-vec (last (str/split (first l) #":")))
+        seed-to-soil (create-map "seed-to-soil" l)
+        soil-to-fertilizer (create-map "soil-to-fertilizer" l)
+        fertilizer-to-water (create-map "fertilizer-to-water" l)
+        water-to-light (create-map "water-to-light" l)
+        light-to-temperature (create-map "light-to-temperature" l)
+        temperature-to-humidity (create-map "temperature-to-humidity" l)
+        humidity-to-location (create-map "humidity-to-location" l) 
+        locations (map #(lookup [seed-to-soil soil-to-fertilizer fertilizer-to-water water-to-light light-to-temperature temperature-to-humidity humidity-to-location] %1) seeds )]
+    (apply min locations)))
