@@ -23,8 +23,8 @@
   [name]
   (let [v (str/split-lines (slurp (io/resource name)))
         xf (comp
-             (map #(str/replace % #"[^0-9]" ""))
-             (map #(parse-long (str (first %) (last %)))))]
+            (map #(str/replace % #"[^0-9]" ""))
+            (map #(parse-long (str (first %) (last %)))))]
     (transduce xf + v)))
 
 (defn day1-1
@@ -32,8 +32,8 @@
   [name]
   (let [v (inputs name identity)
         xf (comp
-             (map #(str/replace % #"[^0-9]" ""))
-             (map #(parse-long (str (first %) (last %)))))]
+            (map #(str/replace % #"[^0-9]" ""))
+            (map #(parse-long (str (first %) (last %)))))]
     (transduce xf + v)))
 
 (defn map-numbers [pairs s]
@@ -46,8 +46,8 @@
   [name]
   (let [v (inputs name identity)
         num-str-pairs (concat
-                        (map-indexed vector (map str (range 10)))
-                        (map-indexed vector ["zero" "one" "two" "three" "four" "five" "six" "seven" "eight" "nine"]))
+                       (map-indexed vector (map str (range 10)))
+                       (map-indexed vector ["zero" "one" "two" "three" "four" "five" "six" "seven" "eight" "nine"]))
         xf (map #(map-numbers num-str-pairs %))]
     (transduce xf + v)))
 
@@ -63,10 +63,10 @@
   [name]
   (let [v (inputs name day2-1-parse-line)
         oknr (keep-indexed
-               (fn [index pairs]
-                 (if (every? (fn [[color cnt]] (<= cnt (color day1-2-thresholds))) pairs)
-                   (inc index)))
-               v)]
+              (fn [index pairs]
+                (if (every? (fn [[color cnt]] (<= cnt (color day1-2-thresholds))) pairs)
+                  (inc index)))
+              v)]
     (reduce + oknr)))
 
 (defn day2-2-parse-line [s]
@@ -93,12 +93,12 @@
                (map #(apply str %))
                (filter #(^[char] Character/isDigit (first %)))
                (reduce
-                 (fn [acc val]
-                   (let [from (if-let [x (last acc)]
-                                (+ (count (x 0)) (x 1))
-                                0)]
-                     (conj acc [val (str/index-of s val from)])))
-                 []))]
+                (fn [acc val]
+                  (let [from (if-let [x (last acc)]
+                               (+ (count (x 0)) (x 1))
+                               0)]
+                    (conj acc [val (str/index-of s val from)])))
+                []))]
     [s z]))
 
 (defn valid-number
@@ -140,50 +140,48 @@
     [[] nil nums stars]
     (let [num (parse-long (apply str digits))
           nums' (reduce
-                  (fn [nums col]
-                    (assoc nums [row col] num))
-                  nums
-                  (range start col))]
+                 (fn [nums col]
+                   (assoc nums [row col] num))
+                 nums
+                 (range start col))]
       [[] nil nums' stars])))
 
 (defn parse-row
   [s row]
   (let [[_ _ nums stars] (reduce-kv
-                           (fn [[digits start nums stars] col c]
-                             (if (^[char] Character/isDigit c)
-                               [(conj digits c) (or start col) nums stars]
-                               (let [stars' (if (= \* c) (conj stars [row col]) stars)]
-                                 (add-num row digits start col nums stars'))))
-                           [[] nil {} []]
-                           (conj (vec s) \.))]
+                          (fn [[digits start nums stars] col c]
+                            (if (^[char] Character/isDigit c)
+                              [(conj digits c) (or start col) nums stars]
+                              (let [stars' (if (= \* c) (conj stars [row col]) stars)]
+                                (add-num row digits start col nums stars'))))
+                          [[] nil {} []]
+                          (conj (vec s) \.))]
     [nums stars]))
 
 (defn day3-2
   [name]
   (let [f (inputs name identity)
         [nums stars] (reduce-kv
-                       (fn [[allnums allstars] row s]
-                         (let [[nums stars] (parse-row s row)]
-                           [(conj allnums nums) (into allstars stars)]))
-                       [{} []]
-                       (vec f))
+                      (fn [[allnums allstars] row s]
+                        (let [[nums stars] (parse-row s row)]
+                          [(conj allnums nums) (into allstars stars)]))
+                      [{} []]
+                      (vec f))
         sum (->> (map
-                   (fn [[row col]]
-                     (reduce
-                       (fn [acc pos] (if-let [num (nums pos)]
-                                       (conj acc num)
-                                       acc))
-                       #{}
-                       [[(dec row) (dec col)] [(dec row) col] [(dec row) (inc col)]
-                        [row (dec col)] [row (inc col)]
-                        [(inc row) (dec col)] [(inc row) col] [(inc row) (inc col)]]))
-                   stars)
+                  (fn [[row col]]
+                    (reduce
+                     (fn [acc pos] (if-let [num (nums pos)]
+                                     (conj acc num)
+                                     acc))
+                     #{}
+                     [[(dec row) (dec col)] [(dec row) col] [(dec row) (inc col)]
+                      [row (dec col)] [row (inc col)]
+                      [(inc row) (dec col)] [(inc row) col] [(inc row) (inc col)]]))
+                  stars)
                  (filter #(= 2 (count %)))
                  (map #(apply * %))
-                 (reduce +))
-        ]
-    sum
-    ))
+                 (reduce +))]
+    sum))
 
 (defn parse-longs [s]
   (into #{} (map parse-long) (str/split (str/trim s) #"\s+")))
@@ -209,14 +207,14 @@
                   (mapv count))
         counts (vec (repeat (count wins) 1))
         total (reduce-kv
-                (fn [acc idx wins]
-                  (let [fpluscount (partial + (acc idx))]
-                    (reduce
-                      (fn [acc iidx] (update acc iidx fpluscount))
-                      acc
-                      (range (inc idx) (+ idx wins 1)))))
-                counts
-                wins)]
+               (fn [acc idx wins]
+                 (let [fpluscount (partial + (acc idx))]
+                   (reduce
+                    (fn [acc iidx] (update acc iidx fpluscount))
+                    acc
+                    (range (inc idx) (+ idx wins 1)))))
+               counts
+               wins)]
 
     (reduce + total)))
 
@@ -262,6 +260,6 @@
         water-to-light (create-map "water-to-light" l)
         light-to-temperature (create-map "light-to-temperature" l)
         temperature-to-humidity (create-map "temperature-to-humidity" l)
-        humidity-to-location (create-map "humidity-to-location" l) 
-        locations (map #(lookup [seed-to-soil soil-to-fertilizer fertilizer-to-water water-to-light light-to-temperature temperature-to-humidity humidity-to-location] %1) seeds )]
+        humidity-to-location (create-map "humidity-to-location" l)
+        locations (map #(lookup [seed-to-soil soil-to-fertilizer fertilizer-to-water water-to-light light-to-temperature temperature-to-humidity humidity-to-location] %1) seeds)]
     (apply min locations)))
